@@ -9,9 +9,10 @@ module Board (
     set,
     remove,
     equals,
+    fromList,
 ) where
 
-import Control.Monad (liftM2)
+import Control.Monad (forM_, liftM2)
 import Data.Vector.Mutable qualified as VM
 
 data Piece = Empty | Black | White deriving (Eq)
@@ -37,10 +38,13 @@ position b (row, column)
     inRange i = 0 <= i && i < width b
 
 positions :: Board -> [Position]
-positions Board{width} = Position <$> [0 .. width - 1] <*> [0 .. width - 1]
+positions b = Position <$> indices b <*> indices b
 
 index :: Board -> Position -> Int
 index Board{width} Position{row, column} = row * width + column
+
+indices :: Board -> [Int]
+indices Board{width} = [0 .. width - 1]
 
 get :: Board -> Position -> IO Piece
 get b pos = VM.read (vector b) (index b pos)
@@ -59,3 +63,12 @@ equals l r
     equals' :: [Position] -> IO Bool
     equals' [] = return True
     equals' (p : ps) = liftM2 (&&) ((==) <$> get l p <*> get r p) (equals' ps)
+
+fromList :: Int -> [[Piece]] -> IO Board
+fromList width xss = do
+    b <- make width
+    let is = indices b
+    forM_ (zip is xss) $ \(row, xs) ->
+        forM_ (zip is xs) $ \(column, x) ->
+            set b Position{row, column} x
+    return b
