@@ -4,14 +4,17 @@ module Board (
     Position,
     make,
     position,
+    positions,
     get,
     set,
     remove,
+    equals,
 ) where
 
+import Control.Monad (liftM2)
 import Data.Vector.Mutable qualified as VM
 
-data Piece = Empty | Black | White
+data Piece = Empty | Black | White deriving (Eq)
 
 data Board = Board
     { width :: Int
@@ -33,6 +36,9 @@ position b (row, column)
   where
     inRange i = 0 <= i && i < width b
 
+positions :: Board -> [Position]
+positions Board{width} = Position <$> [0 .. width - 1] <*> [0 .. width - 1]
+
 index :: Board -> Position -> Int
 index Board{width} Position{row, column} = row * width + column
 
@@ -44,3 +50,12 @@ set b pos = VM.write (vector b) (index b pos)
 
 remove :: Board -> Position -> IO ()
 remove b pos = set b pos Empty
+
+equals :: Board -> Board -> IO Bool
+equals l r
+    | width l /= width r = return False
+    | otherwise = equals' (positions l)
+  where
+    equals' :: [Position] -> IO Bool
+    equals' [] = return True
+    equals' (p : ps) = liftM2 (&&) ((==) <$> get l p <*> get r p) (equals' ps)
