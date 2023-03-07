@@ -12,7 +12,7 @@ build-type:     Simple
 
 library
   exposed-modules:
-      Lib
+      Board
   other-modules:
       Paths_Go
   autogen-modules:
@@ -22,7 +22,8 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
-  default-language: Haskell2010
+    , vector
+  default-language: GHC2021
 
 executable Go-exe
   main-is: Main.hs
@@ -36,7 +37,8 @@ executable Go-exe
   build-depends:
       Go
     , base >=4.7 && <5
-  default-language: Haskell2010
+    , vector
+  default-language: GHC2021
 
 test-suite Go-test
   type: exitcode-stdio-1.0
@@ -51,4 +53,5 @@ test-suite Go-test
   build-depends:
       Go
     , base >=4.7 && <5
-  default-language: Haskell2010
+    , vector
+  default-language: GHC2021
