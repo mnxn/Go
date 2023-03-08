@@ -44,3 +44,5 @@ tests:
       - -with-rtsopts=-N
     dependencies:
       - Go
+      - hspec
+      - QuickCheck

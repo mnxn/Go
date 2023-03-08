@@ -1,6 +1,6 @@
 module Board (
     Piece (Empty, Black, White),
-    Board (Board),
+    Board (Board, width),
     Position,
     make,
     position,
@@ -15,7 +15,8 @@ module Board (
 import Control.Monad (forM_, liftM2)
 import Data.Vector.Mutable qualified as VM
 
-data Piece = Empty | Black | White deriving (Eq)
+data Piece = Empty | Black | White
+    deriving (Eq, Show)
 
 data Board = Board
     { width :: Int
@@ -26,6 +27,7 @@ data Position = Position
     { row :: Int
     , column :: Int
     }
+    deriving (Eq, Show)
 
 make :: Int -> IO Board
 make width = Board width <$> VM.replicate (width * width) Empty
