@@ -6,7 +6,6 @@ language: GHC2021
 
 dependencies:
   - base >= 4.7 && < 5
-  - vector
 
 ghc-options:
   - -Wall
@@ -21,6 +20,8 @@ ghc-options:
 
 library:
   source-dirs: src
+  dependencies:
+    - vector
 
 executables:
   Go-exe:
