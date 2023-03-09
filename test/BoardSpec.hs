@@ -1,3 +1,5 @@
+module BoardSpec (spec) where
+
 import Control.Monad (forM_)
 import Data.Maybe (fromJust)
 
@@ -12,8 +14,8 @@ black, white :: Piece
 black = Piece Black
 white = Piece White
 
-main :: IO ()
-main = hspec $ do
+spec :: Spec
+spec = do
     describe "Board.make w" $ do
         prop "returns a board of width w" $ \w -> do
             b <- Board.make w

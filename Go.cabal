@@ -43,6 +43,7 @@ test-suite Go-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      BoardSpec
       Paths_Go
   autogen-modules:
       Paths_Go
