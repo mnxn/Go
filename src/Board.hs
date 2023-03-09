@@ -16,13 +16,14 @@ module Board (
 ) where
 
 import Control.Monad
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Char (chr, ord)
 import Data.Maybe (mapMaybe)
 import Data.Vector.Mutable qualified as VM
 import Text.Printf (printf)
 
 class Display d where
-    display :: d -> IO ()
+    display :: MonadIO io => d -> io ()
 
 data Player = Black | White
     deriving (Eq, Show)
@@ -31,10 +32,10 @@ data Piece = Empty | Piece Player
     deriving (Eq, Show)
 
 instance Display Piece where
-    display :: Piece -> IO ()
-    display Empty = putChar '+'
-    display (Piece Black) = putChar 'B'
-    display (Piece White) = putChar 'W'
+    display :: MonadIO io => Piece -> io ()
+    display Empty = liftIO $ putChar '+'
+    display (Piece Black) = liftIO $ putChar 'B'
+    display (Piece White) = liftIO $ putChar 'W'
 
 data Position = Position
     { row :: Int
@@ -48,8 +49,8 @@ data Board = Board
     }
 
 instance Display Board where
-    display :: Board -> IO ()
-    display b = do
+    display :: MonadIO io => Board -> io ()
+    display b = liftIO $ do
         forM_ (indices b) $ \col ->
             printf "   %c" (chr $ ord 'A' + col)
         putStrLn ""
@@ -64,8 +65,8 @@ instance Display Board where
                 replicateM_ (width b) $ putStr "   |"
                 putStrLn ""
 
-make :: Int -> IO Board
-make width = Board width <$> VM.replicate (width * width) Empty
+make :: MonadIO io => Int -> io Board
+make width = liftIO $ Board width <$> VM.replicate (width * width) Empty
 
 position :: Board -> (Int, Int) -> Maybe Position
 position b (row, column)
@@ -93,25 +94,25 @@ index Board{width} Position{row, column} = row * width + column
 indices :: Board -> [Int]
 indices Board{width} = [0 .. width - 1]
 
-get :: Board -> Position -> IO Piece
-get b pos = VM.read (vector b) (index b pos)
+get :: MonadIO io => Board -> Position -> io Piece
+get b pos = liftIO $ VM.read (vector b) (index b pos)
 
-set :: Board -> Position -> Piece -> IO ()
-set b pos = VM.write (vector b) (index b pos)
+set :: MonadIO io => Board -> Position -> Piece -> io ()
+set b pos piece = liftIO $ VM.write (vector b) (index b pos) piece
 
-remove :: Board -> Position -> IO ()
+remove :: MonadIO io => Board -> Position -> io ()
 remove b pos = set b pos Empty
 
-equals :: Board -> Board -> IO Bool
+equals :: MonadIO io => Board -> Board -> io Bool
 equals l r
     | width l /= width r = return False
     | otherwise = equals' (positions l)
   where
-    equals' :: [Position] -> IO Bool
+    equals' :: MonadIO io => [Position] -> io Bool
     equals' [] = return True
     equals' (p : ps) = liftM2 (&&) ((==) <$> get l p <*> get r p) (equals' ps)
 
-fromList :: Int -> [[Piece]] -> IO Board
+fromList :: MonadIO io => Int -> [[Piece]] -> io Board
 fromList width xss = do
     b <- make width
     let is = indices b

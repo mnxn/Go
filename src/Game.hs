@@ -49,15 +49,15 @@ loop = do
     gs@GameState{board, current} <- get
 
     liftIO $ putStrLn ""
-    liftIO $ Board.display board
+    Board.display board
     liftIO $ putStrLn ""
 
     pos <- askTurn
     put gs{passCount = 0}
 
-    posPiece <- liftIO $ Board.get board pos
+    posPiece <- Board.get board pos
     case posPiece of
-        Board.Empty -> liftIO $ Board.set board pos (Board.Piece current)
+        Board.Empty -> Board.set board pos (Board.Piece current)
         Board.Piece _ -> throwError PositionTaken
 
 askTurn :: GameM Board.Position
