@@ -25,17 +25,12 @@ main = hspec $ do
             Board.position b (w - 1, w - 1) `shouldNotBe` Nothing
 
     describe "Board.positions" $ do
-        it "returns all positions in a board" $ do
+        it "returns all positions in the board" $ do
             b <- Board.make 2
-            let ps =
-                    [ Board.position b (0, 0)
-                    , Board.position b (0, 1)
-                    , Board.position b (1, 0)
-                    , Board.position b (1, 1)
-                    ]
-            Just (Board.positions b) `shouldBe` sequence ps
+            let ps = fmap (fromJust . Board.position b) [(0, 0), (0, 1), (1, 0), (1, 1)]
+            Board.positions b `shouldBe` ps
 
-        prop "returns (width * width) positions" $ \(NonNegative w) -> do
+        prop "returns width^2 positions" $ \(NonNegative w) -> do
             b <- Board.make w
             length (Board.positions b) `shouldBe` (w * w)
 
