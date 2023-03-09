@@ -16,12 +16,12 @@ white = Piece White
 
 spec :: Spec
 spec = do
-    describe "Board.make w" $ do
+    describe "make w" $ do
         prop "returns a board of width w" $ \w -> do
             b <- Board.make w
             Board.width b `shouldBe` w
 
-    describe "Board.position" $ do
+    describe "position" $ do
         prop "returns Nothing when a position is outside the board width" $ \w -> do
             b <- Board.make w
             Board.position b (w, w) `shouldBe` Nothing
@@ -30,7 +30,7 @@ spec = do
             b <- Board.make w
             Board.position b (w - 1, w - 1) `shouldNotBe` Nothing
 
-    describe "Board.positions" $ do
+    describe "positions" $ do
         it "returns all positions in the board" $ do
             b <- Board.make 2
             let ps = fmap (fromJust . Board.position b) [(0, 0), (0, 1), (1, 0), (1, 1)]
@@ -40,7 +40,7 @@ spec = do
             b <- Board.make w
             length (Board.positions b) `shouldBe` (w * w)
 
-    describe "Board.get" $ do
+    describe "get" $ do
         it "returns the piece at the given position" $ do
             b <-
                 Board.fromList
@@ -52,14 +52,14 @@ spec = do
             let pos = fromJust $ Board.position b (1, 1)
             Board.get b pos >>= (`shouldBe` black)
 
-    describe "Board.set" $ do
+    describe "set" $ do
         it "set the piece at the given position" $ do
             b <- Board.make 3
             let pos = fromJust $ Board.position b (1, 1)
             Board.set b pos black
             Board.get b pos >>= (`shouldBe` black)
 
-    describe "Board.remove" $ do
+    describe "remove" $ do
         it "removes the piece at the given position" $ do
             b <-
                 Board.fromList
@@ -72,7 +72,7 @@ spec = do
             Board.remove b pos
             Board.get b pos >>= (`shouldBe` Empty)
 
-    describe "Board.equals" $ do
+    describe "equals" $ do
         it "returns True for two empty lists" $ do
             l <- Board.make 0
             r <- Board.make 0
@@ -108,7 +108,7 @@ spec = do
             Board.set r pos white
             Board.equals l r >>= (`shouldBe` False)
 
-    describe "Board.fromList" $ do
+    describe "fromList" $ do
         it "returns an empty board given an empty list" $ do
             l <- Board.fromList 0 []
             r <- Board.make 0

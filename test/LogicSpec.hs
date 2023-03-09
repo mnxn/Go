@@ -14,7 +14,7 @@ white = Piece White
 
 spec :: Spec
 spec = do
-    describe "Logic.neighbors" $ do
+    describe "neighbors" $ do
         let boardIO =
                 Board.fromList
                     3
@@ -44,7 +44,7 @@ spec = do
             pieces <- mapM (Board.get b) neighbors
             pieces `shouldBe` [black, Empty, white, black]
 
-    describe "Logic.liberties" $ do
+    describe "liberties" $ do
         let boardIO =
                 Board.fromList
                     4
