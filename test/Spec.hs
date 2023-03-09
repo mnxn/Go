@@ -5,8 +5,12 @@ import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
 import Test.QuickCheck
 
-import Board (Piece (..))
+import Board (Piece (..), Player (..))
 import Board qualified
+
+black, white :: Piece
+black = Piece Black
+white = Piece White
 
 main :: IO ()
 main = hspec $ do
@@ -40,18 +44,18 @@ main = hspec $ do
                 Board.fromList
                     3
                     [ [Empty, Empty, Empty]
-                    , [Empty, Black, Empty]
+                    , [Empty, black, Empty]
                     , [Empty, Empty, Empty]
                     ]
             let pos = fromJust $ Board.position b (1, 1)
-            Board.get b pos >>= (`shouldBe` Black)
+            Board.get b pos >>= (`shouldBe` black)
 
     describe "Board.set" $ do
         it "set the piece at the given position" $ do
             b <- Board.make 3
             let pos = fromJust $ Board.position b (1, 1)
-            Board.set b pos Black
-            Board.get b pos >>= (`shouldBe` Black)
+            Board.set b pos black
+            Board.get b pos >>= (`shouldBe` black)
 
     describe "Board.remove" $ do
         it "removes the piece at the given position" $ do
@@ -59,7 +63,7 @@ main = hspec $ do
                 Board.fromList
                     3
                     [ [Empty, Empty, Empty]
-                    , [Empty, Black, Empty]
+                    , [Empty, black, Empty]
                     , [Empty, Empty, Empty]
                     ]
             let pos = fromJust $ Board.position b (1, 1)
@@ -76,9 +80,9 @@ main = hspec $ do
             l <-
                 Board.fromList
                     3
-                    [ [Empty, Black, White]
-                    , [Black, White, Empty]
-                    , [White, Empty, Black]
+                    [ [Empty, black, white]
+                    , [black, white, Empty]
+                    , [white, Empty, black]
                     ]
             r <- Board.make 3
             forM_ (Board.positions l) $ \pos -> do
@@ -99,7 +103,7 @@ main = hspec $ do
             l <- Board.make w
             r <- Board.make w
             let pos = fromJust $ Board.position r (0, 0)
-            Board.set r pos White
+            Board.set r pos white
             Board.equals l r >>= (`shouldBe` False)
 
     describe "Board.fromList" $ do
@@ -113,15 +117,15 @@ main = hspec $ do
             l <-
                 Board.fromList
                     width
-                    [ [Black, White, Black]
-                    , [White, Empty, White]
-                    , [Black, White, Black]
+                    [ [black, white, black]
+                    , [white, Empty, white]
+                    , [black, white, black]
                     ]
             r <-
                 Board.fromList
                     width
-                    [ [Black, White]
-                    , [White, Empty]
+                    [ [black, white]
+                    , [white, Empty]
                     ]
             Board.equals l r >>= (`shouldBe` True)
 
@@ -130,14 +134,14 @@ main = hspec $ do
             l <-
                 Board.fromList
                     width
-                    [ [White, Black]
-                    , [Black, White]
+                    [ [white, black]
+                    , [black, white]
                     ]
             r <-
                 Board.fromList
                     width
-                    [ [White, Black, Empty]
-                    , [Black, White, Empty]
+                    [ [white, black, Empty]
+                    , [black, white, Empty]
                     , [Empty, Empty, Empty]
                     ]
             Board.equals l r >>= (`shouldBe` True)
@@ -146,9 +150,9 @@ main = hspec $ do
             b <-
                 Board.fromList
                     2
-                    [ [White, Black]
-                    , [Black, White]
+                    [ [white, black]
+                    , [black, white]
                     ]
             let coordinates = [(0, 0), (0, 1), (1, 0), (1, 1)]
             pieces <- mapM (Board.get b . fromJust . Board.position b) coordinates
-            pieces `shouldBe` [White, Black, Black, White]
+            pieces `shouldBe` [white, black, black, white]

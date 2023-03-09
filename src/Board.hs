@@ -1,5 +1,6 @@
 module Board (
-    Piece (Empty, Black, White),
+    Player (Black, White),
+    Piece (Empty, Piece),
     Board (Board, width),
     Position,
     make,
@@ -15,7 +16,10 @@ module Board (
 import Control.Monad (forM_, liftM2)
 import Data.Vector.Mutable qualified as VM
 
-data Piece = Empty | Black | White
+data Player = Black | White
+    deriving (Eq, Show)
+
+data Piece = Empty | Piece Player
     deriving (Eq, Show)
 
 data Board = Board
