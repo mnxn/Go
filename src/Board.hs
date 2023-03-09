@@ -1,8 +1,9 @@
 module Board (
+    Display (display),
     Player (Black, White),
     Piece (Empty, Piece),
     Board (Board, width),
-    Position,
+    Position (row, column),
     make,
     position,
     positions,
@@ -14,9 +15,14 @@ module Board (
     fromList,
 ) where
 
-import Control.Monad (forM_, liftM2)
+import Control.Monad
+import Data.Char (chr, ord)
 import Data.Maybe (mapMaybe)
 import Data.Vector.Mutable qualified as VM
+import Text.Printf (printf)
+
+class Display d where
+    display :: d -> IO ()
 
 data Player = Black | White
     deriving (Eq, Show)
@@ -24,16 +30,39 @@ data Player = Black | White
 data Piece = Empty | Piece Player
     deriving (Eq, Show)
 
-data Board = Board
-    { width :: Int
-    , vector :: VM.IOVector Piece
-    }
+instance Display Piece where
+    display :: Piece -> IO ()
+    display Empty = putChar '+'
+    display (Piece Black) = putChar 'B'
+    display (Piece White) = putChar 'W'
 
 data Position = Position
     { row :: Int
     , column :: Int
     }
     deriving (Eq, Show)
+
+data Board = Board
+    { width :: Int
+    , vector :: VM.IOVector Piece
+    }
+
+instance Display Board where
+    display :: Board -> IO ()
+    display b = do
+        forM_ (indices b) $ \col ->
+            printf "   %c" (chr $ ord 'A' + col)
+        putStrLn ""
+        forM_ (reverse $ indices b) $ \row -> do
+            printf "%-3d" (row + 1)
+            forM_ (indices b) $ \column -> do
+                piece <- get b Position{row, column}
+                display piece
+                when (column < width b - 1) $ putStr "---"
+            putStrLn ""
+            when (row > 0) $ do
+                replicateM_ (width b) $ putStr "   |"
+                putStrLn ""
 
 make :: Int -> IO Board
 make width = Board width <$> VM.replicate (width * width) Empty

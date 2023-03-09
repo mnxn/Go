@@ -1,4 +1,6 @@
 module Main (main) where
 
+import Game qualified
+
 main :: IO ()
-main = return ()
+main = Game.makeState 7 >>= Game.runGame

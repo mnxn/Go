@@ -13,6 +13,7 @@ build-type:     Simple
 library
   exposed-modules:
       Board
+      Game
   other-modules:
       Paths_Go
   autogen-modules:
@@ -22,6 +23,7 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
+    , mtl
     , vector
   default-language: GHC2021
 
