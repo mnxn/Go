@@ -6,6 +6,7 @@ module Board (
     make,
     position,
     positions,
+    neighbors,
     get,
     set,
     remove,
@@ -14,6 +15,7 @@ module Board (
 ) where
 
 import Control.Monad (forM_, liftM2)
+import Data.Maybe (mapMaybe)
 import Data.Vector.Mutable qualified as VM
 
 data Player = Black | White
@@ -45,6 +47,16 @@ position b (row, column)
 
 positions :: Board -> [Position]
 positions b = Position <$> indices b <*> indices b
+
+neighbors :: Board -> Position -> [Position]
+neighbors b Position{row, column} =
+    mapMaybe
+        (position b)
+        [ (row - 1, column)
+        , (row, column + 1)
+        , (row + 1, column)
+        , (row, column - 1)
+        ]
 
 index :: Board -> Position -> Int
 index Board{width} Position{row, column} = row * width + column
