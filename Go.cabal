@@ -14,6 +14,7 @@ library
   exposed-modules:
       Board
       Game
+      Logic
   other-modules:
       Paths_Go
   autogen-modules:
@@ -46,6 +47,7 @@ test-suite Go-test
   main-is: Spec.hs
   other-modules:
       BoardSpec
+      LogicSpec
       Paths_Go
   autogen-modules:
       Paths_Go

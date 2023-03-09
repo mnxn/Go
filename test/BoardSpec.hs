@@ -40,36 +40,6 @@ spec = do
             b <- Board.make w
             length (Board.positions b) `shouldBe` (w * w)
 
-    describe "Board.neighbors" $ do
-        let boardIO =
-                Board.fromList
-                    3
-                    [ [Empty, black, Empty]
-                    , [black, black, Empty]
-                    , [white, white, white]
-                    ]
-
-        it "returns 2 neighbors in the corner" $ do
-            b <- boardIO
-            let pos = fromJust $ Board.position b (0, 0)
-                neighbors = Board.neighbors b pos
-            pieces <- mapM (Board.get b) neighbors
-            pieces `shouldBe` [black, black]
-
-        it "returns 3 neighbors on the side" $ do
-            b <- boardIO
-            let pos = fromJust $ Board.position b (2, 1)
-                neighbors = Board.neighbors b pos
-            pieces <- mapM (Board.get b) neighbors
-            pieces `shouldBe` [black, white, white]
-
-        it "returns 4 neighbors in the center" $ do
-            b <- boardIO
-            let pos = fromJust $ Board.position b (1, 1)
-                neighbors = Board.neighbors b pos
-            pieces <- mapM (Board.get b) neighbors
-            pieces `shouldBe` [black, Empty, white, black]
-
     describe "Board.get" $ do
         it "returns the piece at the given position" $ do
             b <-
