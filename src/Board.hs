@@ -39,7 +39,7 @@ data Position = Position
     { row :: Int
     , column :: Int
     }
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Show)
 
 data Board = Board
     { width :: Int

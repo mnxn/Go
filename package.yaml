@@ -21,6 +21,7 @@ ghc-options:
 library:
   source-dirs: src
   dependencies:
+    - containers
     - vector
     - mtl
 
@@ -45,5 +46,6 @@ tests:
       - -with-rtsopts=-N
     dependencies:
       - Go
+      - containers
       - hspec
       - QuickCheck

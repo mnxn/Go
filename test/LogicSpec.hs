@@ -1,6 +1,7 @@
 module LogicSpec (spec) where
 
 import Data.Maybe (fromJust)
+import Data.Set qualified as Set
 
 import Test.Hspec
 
@@ -70,3 +71,25 @@ spec = do
             Logic.liberties b p02 >>= (`shouldBe` positionList [(0, 3), (1, 2)])
             Logic.liberties b p20 >>= (`shouldBe` positionList [(1, 0), (2, 1), (3, 0)])
             Logic.liberties b p22 >>= (`shouldBe` positionList [(1, 2), (2, 3), (3, 2), (2, 1)])
+
+    describe "group" $ do
+        let boardIO =
+                Board.fromList
+                    4
+                    [ [black, black, black, Empty]
+                    , [Empty, black, Empty, black]
+                    , [white, Empty, white, Empty]
+                    , [Empty, white, Empty, white]
+                    ]
+
+        let positionSet b = Set.fromList . fmap (fromJust . Board.position b)
+
+        it "returns a group of a single position" $ do
+            b <- boardIO
+            let pos = fromJust $ Board.position b (2, 2)
+            Logic.group b pos >>= (`shouldBe` positionSet b [(2, 2)])
+
+        it "returns a group of multiple positions" $ do
+            b <- boardIO
+            let pos = fromJust $ Board.position b (0, 1)
+            Logic.group b pos >>= (`shouldBe` positionSet b [(0, 0), (0, 1), (0, 2), (1, 1)])
