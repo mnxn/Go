@@ -21,11 +21,15 @@ import Data.Char (chr, ord)
 import Data.Vector.Mutable qualified as VM
 import Text.Printf (printf)
 
-class Display d where
-    display :: MonadIO io => d -> io ()
+import Display
 
 data Player = Black | White
     deriving (Eq, Show)
+
+instance Display Player where
+    display :: DisplayParams io -> Player -> io ()
+    display params Black = Display.black params
+    display params White = Display.white params
 
 opposite :: Player -> Player
 opposite Black = White
@@ -33,12 +37,6 @@ opposite White = Black
 
 data Piece = Empty | Piece Player
     deriving (Eq, Show)
-
-instance Display Piece where
-    display :: MonadIO io => Piece -> io ()
-    display Empty = liftIO $ putChar '+'
-    display (Piece Black) = liftIO $ putChar 'B'
-    display (Piece White) = liftIO $ putChar 'W'
 
 data Position = Position
     { row :: Int
@@ -52,21 +50,39 @@ data Board = Board
     }
 
 instance Display Board where
-    display :: MonadIO io => Board -> io ()
-    display b = liftIO $ do
+    display :: MonadIO io => DisplayParams io -> Board -> io ()
+    display params b = do
         forM_ (indices b) $ \col ->
-            printf "   %c" (chr $ ord 'A' + col)
-        putStrLn ""
+            liftIO $ printf "   %c" (chr $ ord 'A' + col)
+        Display.newLine
         forM_ (reverse $ indices b) $ \row -> do
-            printf "%-3d" (row + 1)
+            liftIO $ printf "%-3d" (row + 1)
             forM_ (indices b) $ \column -> do
                 piece <- get b Position{row, column}
-                display piece
-                when (column < width b - 1) $ putStr "---"
-            putStrLn ""
+                case piece of
+                    Empty | row == 0 && column == 0 -> Display.cornerSW params
+                    Empty | row == 0 && column == width b - 1 -> Display.cornerSE params
+                    Empty | row == 0 -> Display.intersectionS params
+                    Empty | row == width b - 1 && column == 0 -> Display.cornerNW params
+                    Empty | row == width b - 1 && column == width b - 1 -> Display.cornerNE params
+                    Empty | row == width b - 1 -> Display.intersectionN params
+                    Empty | column == 0 -> Display.intersectionW params
+                    Empty | column == 0 -> Display.intersectionE params
+                    Empty | column == width b - 1 -> Display.intersectionE params
+                    Empty -> Display.intersection params
+                    Piece p -> Display.display params p
+                when (column < width b - 1) $ Display.horizontal params
+            Display.newLine
             when (row > 0) $ do
-                replicateM_ (width b) $ putStr "   |"
-                putStrLn ""
+                forM_ (indices b) $ \i -> do
+                    Display.string "   "
+                    if i == 0
+                        then Display.verticalW params
+                        else
+                            if i == width b - 1
+                                then Display.verticalE params
+                                else Display.vertical params
+                Display.newLine
 
 make :: MonadIO io => Int -> io Board
 make width = liftIO $ Board width <$> VM.replicate (width * width) Empty

@@ -24,6 +24,8 @@ library:
     - containers
     - vector
     - mtl
+    - ansi-terminal
+    - colour
 
 executables:
   Go-exe:

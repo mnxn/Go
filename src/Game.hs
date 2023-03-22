@@ -10,18 +10,27 @@ import Text.Read (readMaybe)
 
 import Board (Board, Player (Black))
 import Board qualified
+import Display (DisplayParams)
+import Display qualified
 import Logic qualified
 
 data GameState = GameState
     { board :: Board
     , current :: Player
     , passCount :: Int
+    , displayParams :: DisplayParams GameM
     }
 
 makeState :: Int -> IO GameState
 makeState width = do
     board <- Board.make width
-    return $ GameState{board, current = Black, passCount = 0}
+    return $
+        GameState
+            { board
+            , current = Black
+            , passCount = 0
+            , displayParams = Display.ansi
+            }
 
 data GameError
     = InvalidPosition
@@ -50,10 +59,10 @@ runGame gs = do
 
 loop :: GameM ()
 loop = do
-    gs@GameState{board, current} <- get
+    gs@GameState{board, current, displayParams} <- get
 
     liftIO $ putStrLn ""
-    Board.display board
+    Display.display displayParams board
     liftIO $ putStrLn ""
 
     pos <- askTurn
