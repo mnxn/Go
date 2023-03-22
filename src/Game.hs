@@ -1,9 +1,9 @@
-module Game (GameState, makeState, runGame) where
+module Game (GameState, runGame) where
 
 import Control.Monad
 import Control.Monad.Except
 import Control.Monad.State
-import Data.Char (isAsciiUpper, ord)
+import Data.Char (isAsciiUpper, ord, toUpper)
 import Data.Set qualified as Set
 import System.IO (hFlush, stdout)
 import Text.Printf (printf)
@@ -22,16 +22,18 @@ data GameState = GameState
     , displayParams :: Params GameM
     }
 
-makeState :: Int -> IO GameState
-makeState width = do
-    board <- Board.make width
-    return $
-        GameState
-            { board
-            , current = Black
-            , passCount = 0
-            , displayParams = Display.ansi
-            }
+runGame :: Bool -> IO ()
+runGame useAnsi = do
+    liftIO $ putStr "Board width: "
+    liftIO $ hFlush stdout
+    line <- liftIO getLine
+    boardMaybe <- liftIO $ readBoard line
+    let displayParams = if useAnsi then Display.ansi else Display.ascii
+    case boardMaybe of
+        Nothing ->
+            liftIO $ printf "Invalid board size: must be between 2 and 26"
+        Just board ->
+            runGameM $ GameState{board, current = Black, passCount = 0, displayParams}
 
 data GameError
     = InvalidPosition
@@ -40,19 +42,19 @@ data GameError
 
 type GameM = ExceptT GameError (StateT GameState IO)
 
-runGame :: GameState -> IO ()
-runGame gs = do
+runGameM :: GameState -> IO ()
+runGameM gs = do
     result <- runStateT (runExceptT loop) gs
     case result of
         (Left InvalidPosition, gs') -> do
             putStrLn "Error: invalid position"
-            runGame gs'
+            runGameM gs'
         (Left (LogicError Logic.PositionTaken), gs') -> do
             putStrLn "Invalid move: position is already taken"
-            runGame gs'
+            runGameM gs'
         (Left (LogicError Logic.SelfCapture), gs') -> do
             putStrLn "Invalid move: self capture"
-            runGame gs'
+            runGameM gs'
         (Left PlayerPassed, GameState{board, passCount = 2}) -> do
             putStrLn "Game end: both players passed"
             blackScore <- Board.count board Black
@@ -63,7 +65,7 @@ runGame gs = do
                 LT -> "  White wins!"
                 EQ -> "  Tie."
         (_, gs'@GameState{current}) ->
-            runGame gs'{current = Board.opposite current}
+            runGameM gs'{current = Board.opposite current}
 
 loop :: GameM ()
 loop = do
@@ -95,6 +97,13 @@ askTurn = do
     case readPosition board line of
         Just p -> return p
         Nothing -> throwError InvalidPosition
+
+readBoard :: String -> IO (Maybe Board)
+readBoard widthString = case readMaybe widthString of
+    Just (width :: Int)
+        | 2 <= width && width <= 26 ->
+            Just <$> Board.make width
+    _ -> return Nothing
 
 readPosition :: Board -> String -> Maybe Board.Position
 readPosition _ [] = Nothing
