@@ -1,6 +1,7 @@
 module Logic (
     LogicError (PositionTaken, SelfCapture),
     neighbors,
+    Group (Group, getGroupSet),
     group,
     liberties,
     play,
@@ -36,10 +37,12 @@ neighbors b pos =
             , (row, column - 1)
             ]
 
-group :: MonadIO io => Board -> Position -> io (Set Position)
+newtype Group = Group {getGroupSet :: Set Position} deriving (Show, Eq)
+
+group :: MonadIO io => Board -> Position -> io Group
 group b start = do
     target <- Board.get b start
-    Set.insert start <$> group' target Set.empty start
+    Group . Set.insert start <$> group' target Set.empty start
   where
     group' :: MonadIO io => Board.Piece -> Set Position -> Position -> io (Set Position)
     group' target set pos
@@ -52,7 +55,7 @@ group b start = do
 
 liberties :: MonadIO io => Board -> Position -> io (Set Position)
 liberties b start = do
-    g <- group b start
+    Group g <- group b start
     foldrM liberties' Set.empty g
   where
     liberties' :: MonadIO io => Position -> Set Position -> io (Set Position)
@@ -82,5 +85,5 @@ play b pos player = do
     captures (p : ps) = do
         ls <- liberties b p
         if Set.null ls
-            then mappend <$> group b p <*> captures ps
+            then mappend . getGroupSet <$> group b p <*> captures ps
             else captures ps

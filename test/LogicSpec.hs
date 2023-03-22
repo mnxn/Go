@@ -18,6 +18,9 @@ white = Piece White
 positionSet :: Board -> [(Int, Int)] -> Set Board.Position
 positionSet b = Set.fromList . fmap (fromJust . Board.position b)
 
+groupSet :: Board -> [(Int, Int)] -> Logic.Group
+groupSet b = Logic.Group . positionSet b
+
 spec :: Spec
 spec = do
     describe "neighbors" $ do
@@ -63,12 +66,12 @@ spec = do
         it "returns a group of a single position" $ do
             b <- boardIO
             let pos = fromJust $ Board.position b (2, 2)
-            Logic.group b pos >>= (`shouldBe` positionSet b [(2, 2)])
+            Logic.group b pos >>= (`shouldBe` groupSet b [(2, 2)])
 
         it "returns a group of multiple positions" $ do
             b <- boardIO
             let pos = fromJust $ Board.position b (0, 1)
-            Logic.group b pos >>= (`shouldBe` positionSet b [(0, 0), (0, 1), (0, 2), (1, 1)])
+            Logic.group b pos >>= (`shouldBe` groupSet b [(0, 0), (0, 1), (0, 2), (1, 1)])
 
     describe "liberties" $ do
         it "returns a set of no liberties when the board is full" $ do
