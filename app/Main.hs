@@ -24,5 +24,5 @@ helpMessage =
         , "  --ansi"
         , "        use ansi output"
         , "  --help"
-        , "        show this help message"
+        , "        show help message"
         ]

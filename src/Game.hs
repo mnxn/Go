@@ -1,4 +1,4 @@
-module Game (GameState, runGame) where
+module Game (GameState, GameError, GameM, runGame, runGameM) where
 
 import Control.Monad
 import Control.Monad.Except
@@ -22,6 +22,13 @@ data GameState = GameState
     , displayParams :: Params GameM
     }
 
+data GameError
+    = InvalidPosition
+    | PlayerPassed
+    | LogicError Logic.LogicError
+
+type GameM = ExceptT GameError (StateT GameState IO)
+
 runGame :: Bool -> IO ()
 runGame useAnsi = do
     liftIO $ putStr "Board width: "
@@ -34,13 +41,6 @@ runGame useAnsi = do
             liftIO $ printf "Invalid board size: must be between 2 and 26"
         Just board ->
             runGameM $ GameState{board, current = Black, passCount = 0, displayParams}
-
-data GameError
-    = InvalidPosition
-    | PlayerPassed
-    | LogicError Logic.LogicError
-
-type GameM = ExceptT GameError (StateT GameState IO)
 
 runGameM :: GameState -> IO ()
 runGameM gs = do

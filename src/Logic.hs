@@ -23,6 +23,8 @@ data LogicError
     | SelfCapture
     deriving (Show, Eq)
 
+newtype Group = Group {getGroupSet :: Set Position} deriving (Show, Eq)
+
 isPiece :: MonadIO io => Board -> Board.Piece -> Position -> io Bool
 isPiece b piece = fmap (== piece) . Board.get b
 
@@ -36,8 +38,6 @@ neighbors b pos =
             , (row + 1, column)
             , (row, column - 1)
             ]
-
-newtype Group = Group {getGroupSet :: Set Position} deriving (Show, Eq)
 
 group :: MonadIO io => Board -> Position -> io Group
 group b start = do

@@ -27,10 +27,6 @@ import Display qualified
 data Player = Black | White
     deriving (Eq, Show)
 
-opposite :: Player -> Player
-opposite Black = White
-opposite White = Black
-
 data Piece = Empty | Piece Player
     deriving (Eq, Show)
 
@@ -44,6 +40,10 @@ data Board = Board
     { width :: Int
     , vector :: VM.IOVector Piece
     }
+
+opposite :: Player -> Player
+opposite Black = White
+opposite White = Black
 
 make :: MonadIO io => Int -> io Board
 make width = liftIO $ Board width <$> VM.replicate (width * width) Empty
