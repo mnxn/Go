@@ -1,6 +1,7 @@
 module Board (
     Display (display),
     Player (Black, White),
+    opposite,
     Piece (Empty, Piece),
     Board (Board, width),
     Position (row, column),
@@ -25,6 +26,10 @@ class Display d where
 
 data Player = Black | White
     deriving (Eq, Show)
+
+opposite :: Player -> Player
+opposite Black = White
+opposite White = Black
 
 data Piece = Empty | Piece Player
     deriving (Eq, Show)

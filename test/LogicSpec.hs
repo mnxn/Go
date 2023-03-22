@@ -1,5 +1,6 @@
 module LogicSpec (spec) where
 
+import Control.Monad.Except
 import Data.Maybe (fromJust)
 import Data.Set (Set)
 import Data.Set qualified as Set
@@ -102,3 +103,89 @@ spec = do
                     ]
             let pos = fromJust $ Board.position b (0, 1)
             Logic.liberties b pos >>= (`shouldBe` positionSet b [(1, 0), (2, 1), (1, 2), (0, 3)])
+
+    describe "play" $ do
+        it "returns an empty set if no groups would be captured" $ do
+            b <-
+                Board.fromList
+                    2
+                    [ [Empty, Empty]
+                    , [Empty, Empty]
+                    ]
+            let pos = fromJust $ Board.position b (0, 0)
+            runExceptT (Logic.play b pos Black) >>= (`shouldBe` Right Set.empty)
+
+        it "returns a capture set if an opposite group is captured" $ do
+            b <-
+                Board.fromList
+                    3
+                    [ [Empty, Empty, Empty]
+                    , [black, white, black]
+                    , [black, black, black]
+                    ]
+            let pos = fromJust $ Board.position b (0, 1)
+            runExceptT (Logic.play b pos Black) >>= (`shouldBe` Right (positionSet b [(1, 1)]))
+
+        it "returns a capture set if an opposite group is captured to avoid a self-capture" $ do
+            b <-
+                Board.fromList
+                    3
+                    [ [black, Empty, black]
+                    , [black, white, black]
+                    , [black, black, black]
+                    ]
+            let pos = fromJust $ Board.position b (0, 1)
+            runExceptT (Logic.play b pos Black) >>= (`shouldBe` Right (positionSet b [(1, 1)]))
+
+        it "returns a capture set if multiple enemy groups are captured" $ do
+            b <-
+                Board.fromList
+                    3
+                    [ [black, white, black]
+                    , [white, Empty, white]
+                    , [black, white, black]
+                    ]
+            let pos = fromJust $ Board.position b (1, 1)
+            runExceptT (Logic.play b pos Black) >>= (`shouldBe` Right (positionSet b [(0, 1), (1, 0), (2, 1), (1, 2)]))
+
+        it "returns a capture set if a loop enemy group is captured" $ do
+            b <-
+                Board.fromList
+                    3
+                    [ [Empty, white, white]
+                    , [white, black, white]
+                    , [white, white, white]
+                    ]
+            let pos = fromJust $ Board.position b (0, 0)
+            runExceptT (Logic.play b pos Black) >>= (`shouldBe` Right (positionSet b [(0, 1), (0, 2), (1, 2), (2, 2), (2, 1), (2, 0), (1, 0)]))
+
+        it "returns a PositionTaken error if there is already a piece" $ do
+            b <-
+                Board.fromList
+                    2
+                    [ [black, black]
+                    , [black, black]
+                    ]
+            let pos = fromJust $ Board.position b (0, 0)
+            runExceptT (Logic.play b pos Black) >>= (`shouldBe` Left Logic.PositionTaken)
+
+        it "returns a SelfCapture error if own group would be captured" $ do
+            b <-
+                Board.fromList
+                    2
+                    [ [Empty, black, white]
+                    , [black, black, white]
+                    , [white, white, white]
+                    ]
+            let pos = fromJust $ Board.position b (0, 0)
+            runExceptT (Logic.play b pos Black) >>= (`shouldBe` Left Logic.SelfCapture)
+
+        it "returns a SelfCapture error if opposite group would not be captured" $ do
+            b <-
+                Board.fromList
+                    2
+                    [ [Empty, white]
+                    , [white, Empty]
+                    ]
+            let pos = fromJust $ Board.position b (0, 0)
+            runExceptT (Logic.play b pos Black) >>= (`shouldBe` Left Logic.SelfCapture)

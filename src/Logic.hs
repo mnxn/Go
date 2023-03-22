@@ -1,7 +1,9 @@
 module Logic (
+    LogicError (PositionTaken, SelfCapture),
     neighbors,
     group,
     liberties,
+    play,
 ) where
 
 import Control.Monad (filterM)
@@ -11,7 +13,16 @@ import Data.Set qualified as Set
 
 import Board (Board, Position)
 import Board qualified
+import Control.Monad.Except (ExceptT, MonadError (throwError), MonadTrans (lift))
 import Data.Foldable (foldrM)
+
+data LogicError
+    = PositionTaken
+    | SelfCapture
+    deriving (Show, Eq)
+
+isPiece :: Board -> Board.Piece -> Position -> IO Bool
+isPiece b piece = fmap (== piece) . Board.get b
 
 neighbors :: Board -> Position -> [Position]
 neighbors b pos =
@@ -44,7 +55,31 @@ liberties b start = do
     foldrM liberties' Set.empty g
   where
     liberties' :: Position -> Set Position -> IO (Set Position)
-    liberties' pos acc = mappend acc . Set.fromList <$> filterM isEmpty (neighbors b pos)
+    liberties' pos acc = mappend acc . Set.fromList <$> filterM (isPiece b Board.Empty) (neighbors b pos)
 
-    isEmpty :: Position -> IO Bool
-    isEmpty = fmap (== Board.Empty) . Board.get b
+play :: Board -> Position -> Board.Player -> ExceptT LogicError IO (Set Position)
+play b pos player = do
+    currentPiece <- Board.get b pos
+    case currentPiece of
+        Board.Piece _ -> throwError PositionTaken
+        Board.Empty -> do
+            Board.set b pos (Board.Piece player)
+            ownLiberties <- lift $ liberties b pos
+            oppositeNeighbors <- lift $ filterM isOppositePiece (neighbors b pos)
+            oppositeCaptures <- lift $ captures oppositeNeighbors
+            if Set.null ownLiberties && Set.null oppositeCaptures
+                then do
+                    Board.remove b pos
+                    throwError SelfCapture
+                else return oppositeCaptures
+  where
+    isOppositePiece :: Position -> IO Bool
+    isOppositePiece = isPiece b (Board.Piece $ Board.opposite player)
+
+    captures :: [Position] -> IO (Set Position)
+    captures [] = return Set.empty
+    captures (p : ps) = do
+        ls <- liberties b p
+        if Set.null ls
+            then mappend <$> group b p <*> captures ps
+            else captures ps

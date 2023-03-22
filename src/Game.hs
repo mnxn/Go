@@ -7,7 +7,7 @@ import Data.Char (isAsciiUpper, ord)
 import System.IO (hFlush, stdout)
 import Text.Read (readMaybe)
 
-import Board (Board, Player (Black, White))
+import Board (Board, Player (Black))
 import Board qualified
 
 data GameState = GameState
@@ -38,11 +38,7 @@ runGame gs = do
         (Left PlayerPassed, GameState{passCount = 2}) ->
             putStrLn "Game end: both players passed"
         (_, gs'@GameState{current}) ->
-            runGame gs'{current = switch current}
-  where
-    switch :: Player -> Player
-    switch Black = White
-    switch White = Black
+            runGame gs'{current = Board.opposite current}
 
 loop :: GameM ()
 loop = do

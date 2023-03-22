@@ -61,4 +61,5 @@ test-suite Go-test
     , base >=4.7 && <5
     , containers
     , hspec
+    , mtl
   default-language: GHC2021
