@@ -2,6 +2,7 @@ module Logic (
     neighbors,
     liberties,
     group,
+    groupLiberties,
 ) where
 
 import Control.Monad (filterM)
@@ -11,6 +12,7 @@ import Data.Set qualified as Set
 
 import Board (Board, Position)
 import Board qualified
+import Data.Foldable (foldrM)
 
 neighbors :: Board -> Position -> [Position]
 neighbors b pos =
@@ -44,3 +46,13 @@ group b start = do
             if piece == target
                 then mconcat <$> mapM (group' target (Set.insert pos set)) (neighbors b pos)
                 else return Set.empty
+
+groupLiberties :: Board -> Position -> IO (Set Position)
+groupLiberties b start = do
+    g <- group b start
+    foldrM groupLiberties' Set.empty g
+  where
+    groupLiberties' :: Position -> Set Position -> IO (Set Position)
+    groupLiberties' pos ls = do
+        ls' <- liberties b pos
+        return $ mappend ls (Set.fromList ls')
