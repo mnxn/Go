@@ -4,11 +4,13 @@ import Control.Monad
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Char (isAsciiUpper, ord)
+import Data.Set qualified as Set
 import System.IO (hFlush, stdout)
 import Text.Read (readMaybe)
 
 import Board (Board, Player (Black))
 import Board qualified
+import Logic qualified
 
 data GameState = GameState
     { board :: Board
@@ -21,7 +23,10 @@ makeState width = do
     board <- Board.make width
     return $ GameState{board, current = Black, passCount = 0}
 
-data GameError = InvalidPosition | PositionTaken | PlayerPassed
+data GameError
+    = InvalidPosition
+    | PlayerPassed
+    | LogicError Logic.LogicError
 
 type GameM = ExceptT GameError (StateT GameState IO)
 
@@ -32,8 +37,11 @@ runGame gs = do
         (Left InvalidPosition, gs') -> do
             putStrLn "Error: invalid position"
             runGame gs'
-        (Left PositionTaken, gs') -> do
-            putStrLn "Error: position is already taken"
+        (Left (LogicError Logic.PositionTaken), gs') -> do
+            putStrLn "Invalid move: position is already taken"
+            runGame gs'
+        (Left (LogicError Logic.SelfCapture), gs') -> do
+            putStrLn "Invalid move: self capture"
             runGame gs'
         (Left PlayerPassed, GameState{passCount = 2}) ->
             putStrLn "Game end: both players passed"
@@ -51,10 +59,10 @@ loop = do
     pos <- askTurn
     put gs{passCount = 0}
 
-    posPiece <- Board.get board pos
-    case posPiece of
-        Board.Empty -> Board.set board pos (Board.Piece current)
-        Board.Piece _ -> throwError PositionTaken
+    result <- runExceptT $ Logic.play board pos current
+    case result of
+        Left e -> throwError (LogicError e)
+        Right captures -> Set.foldr (\p io -> io >> Board.remove board p) (return ()) captures
 
 askTurn :: GameM Board.Position
 askTurn = do
