@@ -1,5 +1,4 @@
 module Board (
-    Display (display),
     Player (Black, White),
     opposite,
     Piece (Empty, Piece),
@@ -13,6 +12,7 @@ module Board (
     remove,
     equals,
     fromList,
+    display,
 ) where
 
 import Control.Monad
@@ -21,15 +21,10 @@ import Data.Char (chr, ord)
 import Data.Vector.Mutable qualified as VM
 import Text.Printf (printf)
 
-import Display
+import Display qualified
 
 data Player = Black | White
     deriving (Eq, Show)
-
-instance Display Player where
-    display :: DisplayParams io -> Player -> io ()
-    display params Black = Display.black params
-    display params White = Display.white params
 
 opposite :: Player -> Player
 opposite Black = White
@@ -48,41 +43,6 @@ data Board = Board
     { width :: Int
     , vector :: VM.IOVector Piece
     }
-
-instance Display Board where
-    display :: MonadIO io => DisplayParams io -> Board -> io ()
-    display params b = do
-        forM_ (indices b) $ \col ->
-            liftIO $ printf "   %c" (chr $ ord 'A' + col)
-        Display.newLine
-        forM_ (reverse $ indices b) $ \row -> do
-            liftIO $ printf "%-3d" (row + 1)
-            forM_ (indices b) $ \column -> do
-                piece <- get b Position{row, column}
-                case piece of
-                    Empty | row == 0 && column == 0 -> Display.cornerSW params
-                    Empty | row == 0 && column == width b - 1 -> Display.cornerSE params
-                    Empty | row == 0 -> Display.intersectionS params
-                    Empty | row == width b - 1 && column == 0 -> Display.cornerNW params
-                    Empty | row == width b - 1 && column == width b - 1 -> Display.cornerNE params
-                    Empty | row == width b - 1 -> Display.intersectionN params
-                    Empty | column == 0 -> Display.intersectionW params
-                    Empty | column == 0 -> Display.intersectionE params
-                    Empty | column == width b - 1 -> Display.intersectionE params
-                    Empty -> Display.intersection params
-                    Piece p -> Display.display params p
-                when (column < width b - 1) $ Display.horizontal params
-            Display.newLine
-            when (row > 0) $ do
-                forM_ (indices b) $ \i -> do
-                    Display.string "   "
-                    if i == 0
-                        then Display.verticalW params
-                        else
-                            if i == width b - 1
-                                then Display.verticalE params
-                                else Display.vertical params
-                Display.newLine
 
 make :: MonadIO io => Int -> io Board
 make width = liftIO $ Board width <$> VM.replicate (width * width) Empty
@@ -129,3 +89,42 @@ fromList width xss = do
         forM_ (zip is xs) $ \(column, x) ->
             set b Position{row, column} x
     return b
+
+display :: forall io. MonadIO io => Display.Params io -> Board -> io ()
+display params b = do
+    forM_ (indices b) $ \column ->
+        liftIO $ printf "   %c" (chr $ ord 'A' + column)
+    Display.newLine
+    forM_ (reverse $ indices b) $ \row -> do
+        liftIO $ printf "%-3d" (row + 1)
+        Display.begin params
+        forM_ (indices b) $ \column -> do
+            piece <- get b Position{row, column}
+            displayPiece row column piece
+            when (column < width b - 1) $ Display.horizontal params
+        Display.end params
+        when (row > 0) $ do
+            Display.string "   "
+            Display.begin params
+            forM_ (indices b) $ \column -> do
+                Display.vertical params
+                when (column < width b - 1) $ Display.string "   "
+            Display.end params
+  where
+    displayPiece :: Int -> Int -> Piece -> io ()
+    displayPiece _ _ (Piece Black) = Display.black params
+    displayPiece _ _ (Piece White) = Display.white params
+    displayPiece r c Empty
+        | r == w && c == w = Display.cornerNE params
+        | r == w && c == 0 = Display.cornerNW params
+        | r == w = Display.intersectionN params
+    displayPiece 0 c Empty
+        | c == w = Display.cornerSE params
+        | c == 0 = Display.cornerSW params
+        | otherwise = Display.intersectionS params
+    displayPiece _ c Empty
+        | c == w = Display.intersectionE params
+        | c == 0 = Display.intersectionW params
+        | otherwise = Display.intersection params
+
+    w = width b - 1

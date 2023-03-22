@@ -10,7 +10,7 @@ import Text.Read (readMaybe)
 
 import Board (Board, Player (Black))
 import Board qualified
-import Display (DisplayParams)
+import Display (Params)
 import Display qualified
 import Logic qualified
 
@@ -18,7 +18,7 @@ data GameState = GameState
     { board :: Board
     , current :: Player
     , passCount :: Int
-    , displayParams :: DisplayParams GameM
+    , displayParams :: Params GameM
     }
 
 makeState :: Int -> IO GameState
@@ -61,9 +61,9 @@ loop :: GameM ()
 loop = do
     gs@GameState{board, current, displayParams} <- get
 
-    liftIO $ putStrLn ""
-    Display.display displayParams board
-    liftIO $ putStrLn ""
+    Display.newLine
+    Board.display displayParams board
+    Display.newLine
 
     pos <- askTurn
     put gs{passCount = 0}
@@ -72,6 +72,8 @@ loop = do
     case result of
         Left e -> throwError (LogicError e)
         Right captures -> Set.foldr (\p io -> io >> Board.remove board p) (return ()) captures
+
+    Display.clear displayParams
 
 askTurn :: GameM Board.Position
 askTurn = do

@@ -1,8 +1,7 @@
 module Display (
-    DisplayParams (..),
+    Params (..),
     ascii,
     ansi,
-    Display (display),
     newLine,
     char,
     string,
@@ -13,7 +12,7 @@ import Data.Colour.SRGB (sRGB24)
 import Data.Word (Word8)
 import System.Console.ANSI
 
-data DisplayParams io = DisplayParams
+data Params io = Params
     { intersection :: io ()
     , intersectionN :: io ()
     , intersectionE :: io ()
@@ -24,15 +23,13 @@ data DisplayParams io = DisplayParams
     , cornerSW :: io ()
     , cornerNW :: io ()
     , vertical :: io ()
-    , verticalE :: io ()
-    , verticalW :: io ()
     , horizontal :: io ()
     , black :: io ()
     , white :: io ()
+    , begin :: io ()
+    , end :: io ()
+    , clear :: io ()
     }
-
-class Display d where
-    display :: MonadIO io => DisplayParams io -> d -> io ()
 
 newLine :: MonadIO io => io ()
 newLine = liftIO $ putStrLn ""
@@ -49,9 +46,9 @@ color l r g b = liftIO $ setSGR [SetRGBColor l $ sRGB24 r g b]
 reset :: MonadIO io => io ()
 reset = liftIO $ setSGR [Reset]
 
-ascii :: MonadIO io => DisplayParams io
+ascii :: MonadIO io => Params io
 ascii =
-    DisplayParams
+    Params
         { intersection
         , intersectionN = intersection
         , intersectionE = intersection
@@ -62,11 +59,12 @@ ascii =
         , cornerSW = intersection
         , cornerNW = intersection
         , vertical
-        , verticalE = vertical
-        , verticalW = vertical
         , horizontal
         , black
         , white
+        , begin
+        , end
+        , clear
         }
   where
     intersection = char '+'
@@ -74,10 +72,13 @@ ascii =
     horizontal = string "---"
     black = char 'B'
     white = char 'W'
+    begin = return ()
+    end = newLine
+    clear = return ()
 
-ansi :: MonadIO io => DisplayParams io
+ansi :: MonadIO io => Params io
 ansi =
-    DisplayParams
+    Params
         { intersection
         , intersectionN
         , intersectionE
@@ -88,11 +89,12 @@ ansi =
         , cornerSW
         , cornerNW
         , vertical
-        , verticalE
-        , verticalW
         , horizontal
         , black
         , white
+        , begin
+        , end
+        , clear
         }
   where
     intersection = string "┼"
@@ -107,15 +109,15 @@ ansi =
     cornerNW = string "┌"
 
     vertical = string "│"
-    verticalE = string "│"
-    verticalW = string "│"
 
     horizontal = string "───"
 
-    black = do
-        string "■"
-        reset
+    black = string "■"
+    white = string "○"
 
-    white = do
-        string "■"
-        reset
+    begin = do
+        color Background 210 180 140
+        color Foreground 0 0 0
+    end = reset >> newLine
+
+    clear = liftIO clearScreen
