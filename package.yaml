@@ -37,6 +37,8 @@ executables:
       - -with-rtsopts=-N
     dependencies:
       - Go
+      - with-utf8
+      - code-page
 
 tests:
   Go-test:

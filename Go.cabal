@@ -44,6 +44,8 @@ executable Go-exe
   build-depends:
       Go
     , base >=4.7 && <5
+    , code-page
+    , with-utf8
   default-language: GHC2021
 
 test-suite Go-test
