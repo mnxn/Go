@@ -27,11 +27,21 @@ Usage:
 
 ```haskell
 data Params io
-
-newLine :: MonadIO io => io ()
 ascii   :: MonadIO io => Params io
 ansi    :: MonadIO io => Params io
+
+newLine :: MonadIO io => io ()
+char    :: MonadIO io => Char -> io ()
+string  :: MonadIO io => String -> io ()
 ```
+
+The Display module contains the Display.Params type, which holds the specific ways to display various parts of the game
+board. Every function is parameterized over the `MonadIO` to make them usable in any Monad transformers that have IO.
+
+-   The `ascii` value uses normal ASCII characters without any special terminal features.
+
+-   The `ansi` value uses Unicode characters and the functions from the `ansi-terminal` library for terminal clearing
+    and colors.
 
 ## Board
 
