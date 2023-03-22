@@ -64,6 +64,25 @@ fromList  :: MonadIO io => Int -> [[Piece]] -> io Board
 display   :: MonadIO io => Display.Params io -> Board -> io ()
 ```
 
+The core of the game is represented in the `Board` type. Under the hood, the implementation is a flat `IOVector` from
+the `vector` library. Each element of the board is `Empty` or a `Piece` for one of two players (`Black` or `White`).
+
+Board must have a width to be created through either `make` or `fromList`. The other functions use the board's width to
+perform calculations.
+
+-   The `equals` function takes two boards and only returns true if the width and all elements are equal.
+-   The `count` function is implemented using the vector `foldr` higher-order function and returns the number of pieces
+    of a giver player.
+-   The `display` function iterates over the entire vector and uses the functions from the `Display` module to print a
+    representation of the board to the terminal.
+
+Positions are represented as a record with the row and column indices. When accessing or modifying the vector, the
+2-dimensional position is converted into a 1-dimensional index into the vector.
+
+-   The `position` smart constructor takes a board and 2-dimensional coordinate as parameters and only returns `Just` of
+    a position if the position is valid for the board.
+-   The `positions` function returns a list of all valid positions within the board's width.
+
 ## Logic
 
 ```haskell
