@@ -1,8 +1,7 @@
 module Logic (
     neighbors,
-    liberties,
     group,
-    groupLiberties,
+    liberties,
 ) where
 
 import Control.Monad (filterM)
@@ -25,20 +24,12 @@ neighbors b pos =
             , (row, column - 1)
             ]
 
-liberties :: Board -> Position -> IO [Position]
-liberties b pos = filterM isEmpty (neighbors b pos)
-  where
-    isEmpty :: Position -> IO Bool
-    isEmpty = fmap (== Board.Empty) . Board.get b
-
-type Group = Set Board.Position
-
-group :: Board -> Position -> IO Group
+group :: Board -> Position -> IO (Set Position)
 group b start = do
     target <- Board.get b start
     Set.insert start <$> group' target Set.empty start
   where
-    group' :: Board.Piece -> Group -> Position -> IO Group
+    group' :: Board.Piece -> Set Position -> Position -> IO (Set Position)
     group' target set pos
         | Set.member pos set = return set
         | otherwise = do
@@ -47,12 +38,13 @@ group b start = do
                 then mconcat <$> mapM (group' target (Set.insert pos set)) (neighbors b pos)
                 else return Set.empty
 
-groupLiberties :: Board -> Position -> IO (Set Position)
-groupLiberties b start = do
+liberties :: Board -> Position -> IO (Set Position)
+liberties b start = do
     g <- group b start
-    foldrM groupLiberties' Set.empty g
+    foldrM liberties' Set.empty g
   where
-    groupLiberties' :: Position -> Set Position -> IO (Set Position)
-    groupLiberties' pos ls = do
-        ls' <- liberties b pos
-        return $ mappend ls (Set.fromList ls')
+    liberties' :: Position -> Set Position -> IO (Set Position)
+    liberties' pos acc = mappend acc . Set.fromList <$> filterM isEmpty (neighbors b pos)
+
+    isEmpty :: Position -> IO Bool
+    isEmpty = fmap (== Board.Empty) . Board.get b

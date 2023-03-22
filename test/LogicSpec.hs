@@ -49,33 +49,6 @@ spec = do
             pieces <- mapM (Board.get b) neighbors
             pieces `shouldBe` [black, Empty, white, black]
 
-    describe "liberties" $ do
-        let boardIO =
-                Board.fromList
-                    4
-                    [ [black, black, black, Empty]
-                    , [Empty, black, Empty, black]
-                    , [white, Empty, white, Empty]
-                    , [Empty, white, Empty, white]
-                    ]
-
-        it "returns 0 positions when surrounded" $ do
-            b <- boardIO
-            let pos = fromJust $ Board.position b (1, 0)
-            Logic.liberties b pos >>= (`shouldBe` [])
-
-        it "returns between 1 and 4 positions when not completely surrounded" $ do
-            b <- boardIO
-            let positionList = fmap (fromJust . Board.position b)
-                p00 = fromJust $ Board.position b (0, 0)
-                p02 = fromJust $ Board.position b (0, 2)
-                p20 = fromJust $ Board.position b (2, 0)
-                p22 = fromJust $ Board.position b (2, 2)
-            Logic.liberties b p00 >>= (`shouldBe` positionList [(1, 0)])
-            Logic.liberties b p02 >>= (`shouldBe` positionList [(0, 3), (1, 2)])
-            Logic.liberties b p20 >>= (`shouldBe` positionList [(1, 0), (2, 1), (3, 0)])
-            Logic.liberties b p22 >>= (`shouldBe` positionList [(1, 2), (2, 3), (3, 2), (2, 1)])
-
     describe "group" $ do
         let boardIO =
                 Board.fromList
@@ -96,7 +69,7 @@ spec = do
             let pos = fromJust $ Board.position b (0, 1)
             Logic.group b pos >>= (`shouldBe` positionSet b [(0, 0), (0, 1), (0, 2), (1, 1)])
 
-    describe "groupLiberties" $ do
+    describe "liberties" $ do
         it "returns a set of no liberties when the board is full" $ do
             b <-
                 Board.fromList
@@ -105,7 +78,7 @@ spec = do
                     , [black, black]
                     ]
             let pos = fromJust $ Board.position b (0, 0)
-            Logic.groupLiberties b pos >>= (`shouldBe` Set.empty)
+            Logic.liberties b pos >>= (`shouldBe` Set.empty)
 
         it "returns a set of no liberties when surrounded" $ do
             b <-
@@ -116,7 +89,7 @@ spec = do
                     , [Empty, white, Empty]
                     ]
             let pos = fromJust $ Board.position b (1, 1)
-            Logic.groupLiberties b pos >>= (`shouldBe` Set.empty)
+            Logic.liberties b pos >>= (`shouldBe` Set.empty)
 
         it "returns a set of multiple liberties" $ do
             b <-
@@ -128,4 +101,4 @@ spec = do
                     , [Empty, white, Empty, white]
                     ]
             let pos = fromJust $ Board.position b (0, 1)
-            Logic.groupLiberties b pos >>= (`shouldBe` positionSet b [(1, 0), (2, 1), (1, 2), (0, 3)])
+            Logic.liberties b pos >>= (`shouldBe` positionSet b [(1, 0), (2, 1), (1, 2), (0, 3)])
