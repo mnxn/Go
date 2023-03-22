@@ -108,8 +108,9 @@ readBoard widthString = case readMaybe widthString of
 readPosition :: Board -> String -> Maybe Board.Position
 readPosition _ [] = Nothing
 readPosition b (rowChar : columnString) = do
-    guard $ isAsciiUpper rowChar
-    let row = ord rowChar - ord 'A'
+    let upperRowChar = toUpper rowChar
+    guard $ isAsciiUpper upperRowChar
+    let row = ord upperRowChar - ord 'A'
     column :: Int <- readMaybe columnString
     guard $ column >= 1
     Board.position b (column - 1, row)
