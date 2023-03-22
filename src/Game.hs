@@ -6,9 +6,10 @@ import Control.Monad.State
 import Data.Char (isAsciiUpper, ord)
 import Data.Set qualified as Set
 import System.IO (hFlush, stdout)
+import Text.Printf (printf)
 import Text.Read (readMaybe)
 
-import Board (Board, Player (Black))
+import Board (Board, Player (Black, White))
 import Board qualified
 import Display (Params)
 import Display qualified
@@ -52,8 +53,15 @@ runGame gs = do
         (Left (LogicError Logic.SelfCapture), gs') -> do
             putStrLn "Invalid move: self capture"
             runGame gs'
-        (Left PlayerPassed, GameState{passCount = 2}) ->
+        (Left PlayerPassed, GameState{board, passCount = 2}) -> do
             putStrLn "Game end: both players passed"
+            blackScore <- Board.count board Black
+            whiteScore <- Board.count board White
+            printf "\nStone scoring:\n  Black: %d\n  White: %d\n" blackScore whiteScore
+            putStrLn $ case compare blackScore whiteScore of
+                GT -> "  Black wins!"
+                LT -> "  White wins!"
+                EQ -> "  Tie."
         (_, gs'@GameState{current}) ->
             runGame gs'{current = Board.opposite current}
 

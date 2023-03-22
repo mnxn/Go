@@ -11,6 +11,7 @@ module Board (
     set,
     remove,
     equals,
+    count,
     fromList,
     display,
 ) where
@@ -80,6 +81,14 @@ equals l r
     equals' :: MonadIO io => [Position] -> io Bool
     equals' [] = return True
     equals' (p : ps) = liftM2 (&&) ((==) <$> get l p <*> get r p) (equals' ps)
+
+count :: Board -> Player -> IO Int
+count b player = VM.foldr counter 0 (vector b)
+  where
+    counter :: Piece -> Int -> Int
+    counter piece acc
+        | piece == Piece player = 1 + acc
+        | otherwise = acc
 
 fromList :: MonadIO io => Int -> [[Piece]] -> io Board
 fromList width xss = do
