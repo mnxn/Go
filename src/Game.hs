@@ -1,4 +1,11 @@
-module Game (GameState, GameError, GameM, runGame, runGameM) where
+module Game (
+    GameState,
+    GameError,
+    GameM,
+    run,
+    runGameM,
+    gameLoop,
+) where
 
 import Control.Monad
 import Control.Monad.Except
@@ -29,8 +36,8 @@ data GameError
 
 type GameM = ExceptT GameError (StateT GameState IO)
 
-runGame :: Bool -> IO ()
-runGame useAnsi = do
+run :: Bool -> IO ()
+run useAnsi = do
     liftIO $ putStr "Board width: "
     liftIO $ hFlush stdout
     line <- liftIO getLine
@@ -40,21 +47,21 @@ runGame useAnsi = do
         Nothing ->
             liftIO $ printf "Invalid board size: must be between 2 and 26"
         Just board ->
-            runGameM $ GameState{board, current = Black, passCount = 0, displayParams}
+            runGameM gameLoop $ GameState{board, current = Black, passCount = 0, displayParams}
 
-runGameM :: GameState -> IO ()
-runGameM gs = do
+runGameM :: GameM () -> GameState -> IO ()
+runGameM loop gs = do
     result <- runStateT (runExceptT loop) gs
     case result of
         (Left InvalidPosition, gs') -> do
             putStrLn "Error: invalid position"
-            runGameM gs'
+            runGameM loop gs'
         (Left (LogicError Logic.PositionTaken), gs') -> do
             putStrLn "Invalid move: position is already taken"
-            runGameM gs'
+            runGameM loop gs'
         (Left (LogicError Logic.SelfCapture), gs') -> do
             putStrLn "Invalid move: self capture"
-            runGameM gs'
+            runGameM loop gs'
         (Left PlayerPassed, GameState{board, passCount = 2}) -> do
             putStrLn "Game end: both players passed"
             blackScore <- Board.count board Black
@@ -65,10 +72,10 @@ runGameM gs = do
                 LT -> "  White wins!"
                 EQ -> "  Tie."
         (_, gs'@GameState{current}) ->
-            runGameM gs'{current = Board.opposite current}
+            runGameM loop gs'{current = Board.opposite current}
 
-loop :: GameM ()
-loop = do
+gameLoop :: GameM ()
+gameLoop = do
     gs@GameState{board, current, displayParams} <- get
 
     Display.newLine

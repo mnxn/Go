@@ -124,6 +124,33 @@ data GameState = GameState
 data GameError = InvalidPosition | PlayerPassed | LogicError Logic.LogicError
 type GameM     = ExceptT GameError (StateT GameState IO)
 
-runGame  :: Bool -> IO ()
-runGameM :: GameState -> IO ()
+run      :: Bool -> IO ()
+runGameM :: GameM () -> GameState -> IO ()
+gameLoop :: GameM ()
 ```
+
+The `Game` module is in control of the gameplay interactions. At all times during the game, the current state is held in
+the `GameState` record. The `GameError` type has the different types of errors that can interrupt the game.
+
+The `GameM` is the core Monad of the module. It is implemented with the `ExceptT` and `StateT` Monad transformers and
+uses `IO` at the core. Using a Monad transformer provides simple do notation for handling multiple Monads.
+
+-   The Monad transformer tower _roughly_ expands to:
+
+```haskell
+type GameM a = ExceptT GameError (StateT GameState IO) a
+             = StateT GameState IO (Either GameError a)
+             = GameState -> m (Either GameError a, GameState)
+
+```
+
+-   By using `ExceptT e (StateT s m)` instead of `StateT s (ExceptT e)`, it allows the `runGameM` function to handle
+    errors and continue evaluation. The opposite order would lose the current state when it encounters errors.
+
+-   `runGameM` takes a value of the `GameM ()` type and repeatedly evaluates it and updates the game state.
+
+    -   On error, the `runGameM` inspects the current state and decides whether to recover and which player should move
+        next. Otherwise, the function switches the current player and continues the game
+
+    -   `runGameM` only stops evaluation when both players have passed (the state's `passCount` is zero) and calculates
+        the final score.

@@ -10,9 +10,9 @@ main :: IO ()
 main = withUtf8 $ withCP65001 $ do
     args <- getArgs
     case args of
-        [] -> Game.runGame True
-        ["--ansi"] -> Game.runGame True
-        ["--ascii"] -> Game.runGame False
+        [] -> Game.run True
+        ["--ansi"] -> Game.run True
+        ["--ascii"] -> Game.run False
         _ -> putStrLn helpMessage
 
 helpMessage :: String
