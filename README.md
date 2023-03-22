@@ -95,6 +95,23 @@ liberties :: MonadIO io => Board -> Position -> io (Set Position)
 play      :: MonadIO io => Board -> Position -> Board.Player -> ExceptT LogicError io (Set Position)
 ```
 
+The `Logic` builds on top of the `Board` module to implement specific game logic for the Go game.
+
+-   The `neighbors` function uses `Board.position` internally to return a list of valid positions adjacent to a given
+    position.
+-   `group` returns a `Set` of positions (wrapped in the `Group` type) for the connected group of pieces starting a some
+    position. Using the `Set` type provides an efficient way to avoid visiting a position multiple times.
+-   The `liberties` function returns a `Set` of liberties (empty positions) around a connected group starting at a given
+    position. It uses the `filterM` function internally to collect only the `Empty` positions around each piece.
+-   The `play` function attempts to place a player's piece at a given position.
+    -   First, it returns `PositionTaken` if there is already a piece at the position.
+    -   Then it places the piece with `Board.set` and checks the liberties of that group. If it has liberties, it
+        returns an empty set.
+    -   If the newly placed piece has no liberties, but it is going to capture an enemy group, it returns a set of all
+        positions that are captured.
+    -   However, if the new piece has no liberties and it does not capture any groups, the move is rolled back with
+        `Board.remove` and a `SelfCapture` error is returned.
+
 ## Game
 
 ```haskell
