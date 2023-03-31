@@ -8,7 +8,7 @@ module Logic (
 ) where
 
 import Control.Monad (filterM)
-import Control.Monad.Except (ExceptT, MonadError (throwError))
+import Control.Monad.Error.Class (MonadError (throwError))
 import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (foldrM)
 import Data.Maybe (mapMaybe)
@@ -61,7 +61,7 @@ liberties b start = do
     liberties' :: MonadIO io => Position -> Set Position -> io (Set Position)
     liberties' pos acc = mappend acc . Set.fromList <$> filterM (isPiece b Board.Empty) (neighbors b pos)
 
-play :: MonadIO io => Board -> Position -> Board.Player -> ExceptT LogicError io (Set Position)
+play :: (MonadIO eio, MonadError LogicError eio) => Board -> Position -> Board.Player -> eio (Set Position)
 play b pos player = do
     currentPiece <- Board.get b pos
     case currentPiece of

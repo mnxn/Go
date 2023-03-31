@@ -85,10 +85,8 @@ gameLoop = do
     pos <- askTurn
     put gs{passCount = 0}
 
-    result <- runExceptT $ Logic.play board pos current
-    case result of
-        Left e -> throwError (LogicError e)
-        Right captures -> Set.foldr (\p io -> io >> Board.remove board p) (return ()) captures
+    captures <- withExceptT LogicError $ Logic.play board pos current
+    Set.foldr (\p io -> io >> Board.remove board p) (return ()) captures
 
     Display.clear displayParams
 
