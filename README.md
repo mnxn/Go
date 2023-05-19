@@ -21,9 +21,13 @@ Usage:
 -   Each player's score is calculated using the stone scoring method
 -   The player with the highest score is the winner
 
-# Implementation
+## Screenshot
 
-## Display
+![screenshot](images/screenshot.png)
+
+## Implementation Details
+
+### Display
 
 ```haskell
 data Params io
@@ -43,7 +47,7 @@ board. Every function is parameterized over the `MonadIO` to make them usable in
 -   The `ansi` value uses Unicode characters and the functions from the `ansi-terminal` library for terminal clearing
     and colors.
 
-## Board
+### Board
 
 ```haskell
 data Player   = Black | White
@@ -83,7 +87,7 @@ Positions are represented as a record with the row and column indices. When acce
     a position if the position is valid for the board.
 -   The `positions` function returns a list of all valid positions within the board's width.
 
-## Logic
+### Logic
 
 ```haskell
 data LogicError = PositionTaken | SelfCapture
@@ -112,7 +116,7 @@ The `Logic` builds on top of the `Board` module to implement specific game logic
     -   However, if the new piece has no liberties and it does not capture any groups, the move is rolled back with
         `Board.remove` and a `SelfCapture` error is returned.
 
-## Game
+### Game
 
 ```haskell
 data GameState = GameState
